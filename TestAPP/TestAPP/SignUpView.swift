@@ -9,18 +9,16 @@ import SwiftUI
 
 struct SignUpView: View {
     
-    @FetchRequest(sortDescriptors: []) var user: FetchedResults<Users>
-    @Environment(\.managedObjectContext) var moc
-    
     @State private var email = ""
     @State private var password = ""
     @State private var repassword = ""
-    @State private var wrongemail = 0
     @State private var wrongpassword = 0
     @State private var isActive = false
+    @State var authFail: Bool = false
+    @StateObject var pageview = PageView()
     var body: some View {
         NavigationView{
-            VStack(spacing: 15){
+            VStack(spacing: 10){
                 Spacer()
                 
                 Text("Student Rooms")
@@ -28,7 +26,7 @@ struct SignUpView: View {
                 
                 HStack{
                     Image(systemName: "envelope").foregroundColor(.gray)
-                    TextField("Email", text: $email).border(.red, width: CGFloat(wrongemail))
+                    TextField("Email", text: $email)
                 }.padding(.all, 20).background(Color.white).cornerRadius(8).padding(.horizontal, 20)
                 
                 HStack{
@@ -38,15 +36,25 @@ struct SignUpView: View {
                 
                 HStack{
                     Image(systemName: "lock").foregroundColor(.gray)
-                    SecureField("Re Enter Password", text: $repassword).border(.red, width: CGFloat(wrongpassword))
-                }.padding(.all, 20).background(Color.white).cornerRadius(8).padding(.horizontal, 20)
+                    SecureField("Re Enter Password", text: $repassword)
+                }.padding(.all, 20).background(Color.white).cornerRadius(8).padding(.horizontal, 20).border(.red, width: CGFloat(wrongpassword))
                 
-                NavigationLink(destination: homeView(), isActive: $isActive){
-                    Button(action: {
-                        authenticateLogUp(email: email, pass: password, repass: repassword)}){
-                            Text("SignUp").foregroundColor(.white).font(.system(size: 24, weight: .medium))
-                        }.frame(maxWidth: .infinity).padding(.vertical, 20).background(Color.white.opacity(0.1)).cornerRadius(8).padding(.horizontal,20)
+                if authFail{
+                    Text("No Matching passwords").offset(y: -10).foregroundColor(.red)
                 }
+                
+                NavigationLink(destination: homeView(pageview: pageview), isActive: $isActive){EmptyView()}
+                .navigationBarBackButtonHidden(true)
+                .navigationBarTitle("").navigationBarHidden(true)
+                
+                Button(action: {
+                    authenticateLogUp(email: email, pass: password, repass: repassword)}){
+                        Text("SignUp").foregroundColor(.white)
+                            .font(.system(size: 24, weight: .medium))
+                    }.frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .background(Color.red.opacity(0.5)).cornerRadius(8).padding(.horizontal,20)
+                
                 
                 Spacer()
                 
@@ -58,23 +66,13 @@ struct SignUpView: View {
         }
     }
     func authenticateLogUp(email: String, pass: String, repass: String){
-        
-        let user = Users(context: moc)
-        
-        if email.lowercased() == "hatimdd@gmail.com"{
-            wrongemail = 0
-            if pass == repass{
-                user.email = email
-                user.password = pass
-                try? moc.save()
-                wrongpassword = 0
-                isActive = true
-            }
-            else{
-                wrongpassword = 2
-            }
-        }else{
-            wrongemail = 2
+        if pass == repass{
+            wrongpassword = 0
+            isActive = true
+        }
+        else{
+            authFail = true
+            wrongpassword = 2
         }
     }
 }
